@@ -105,10 +105,24 @@ MoE混合专家系统是一种稀疏模型，因此其训练过程不同于传�
 \section{研究内容}
 
 \textbf{研究目标}。
-%
+
+\begin{figure}[t!]
+    \vskip 2ex
+    \centering
+    \includegraphics[width=0.99\linewidth]{figures/fig7.png}
+    \caption{传统的Top1和Top2 Gating策略}
+    \label{fig-overview}
+    \end{figure}
+
 本课题针对MoE模型带来以上挑战，拟分析现有的MoE模型分布式训练系统存在的缺陷，并设计一套全新的MoE模型训练系统。
 % 
-在算法层面与系统层面提出全新的训练解决方案，提升MoE模型训练瓶颈，更好的适应更加复杂和庞大的深度学习任务需求。
+如图\ref{fig-overview}所示，我们提出了一种全新的MoE训练系统，通过在算法层面（gating policy）和系统层面（Expert placement scheduler）提出创新的训练解决方案，旨在克服MoE模型训练过程中的瓶颈，并更好地适应复杂而庞大的深度学习任务需求。
+
+在算法层面，我们针对MoE模型的关键部分，即gating策略，进行了改进。我们通过动态调整数据分派策略，使其获得较快的收敛速度，同时也有合适的全局通信开销。
+
+同时，在系统层面，我们提出了一种专家分配调度器（Expert placement scheduler），它能够根据网络拓扑以及任务负载，找到最合适的专家并行的策略。这样的设计考虑任务的特性、数据的分布以及专家的能力，我们能够动态地优化专家的分配策略，使得每个专家都能够发挥最大的潜力，并在整个系统中平衡负载和资源利用率。
+
+这种全新的训练解决方案使得MoE模型能够更好地应对复杂和庞大的深度学习任务需求。通过优化算法和系统设计，我们能够充分发挥MoE模型的潜力，提高模型的准确性和泛化能力，为解决现实世界中的复杂问题提供了有力的工具。我们的研究对于推动MoE技术的发展和应用具有重要意义，并在深度学习模型训练的领域取得了显著的突破。
 
 \subsection{基于动态路由的数据分派策略}
 
@@ -190,7 +204,18 @@ Fairseq-MoE\ucite{ott2019fairseq}  是一个序列建模框架，用于训练用
 而 Tutel\ucite{hwang2022tutel} 在通信和计算方面进一步优化了 Fairseq 系统，其性能提升了约 40\%。
 Tutel 中的优化已集成到 DeepSpeed 中，以促进 MoE 模型训练。
 
-\subsection{分布式深度学习训练概述}
+\subsection{MoE数据分派策略}
+MoE的核心问题之一是如何设计gating策略，即如何根据输入分配不同的专家网络。不同的gating策略会影响模型的性能、稀疏性、均衡性和公平性。
+\begin{itemize}
+    \item Softmax gating\ucite{he2021fastmoe}：这是最简单的一种gating策略，它使用一个softmax层来为每个输入分配一个概率分布，表示每个专家网络的权重。这种方法可以看作是多个专家网络合作来产生输出，但是也会导致所有的专家网络都被激活，从而增加计算量和内存消耗。
+    \item Top-k gating\ucite{hwang2022tutel}：这种gating策略只选择概率最高的k个专家网络来处理输入，其他的专家网络则被忽略。这种方法可以实现稀疏性，即只有少数的专家网络被激活，从而节省计算量和内存消耗。但是这种方法也会带来一些问题，比如如何确定k的值，以及如何保证每个专家网络都能被充分利用。
+    \item Noisy softmax gating\ucite{xu2022survey}：这种gating策略在softmax gating的基础上增加了一个可学习的噪声权重，用来提高不同专家网络的gating均衡性。这种方法可以防止某些专家网络被过度使用或者被忽略，从而提高模型的公平性和泛化能力。
+    \item Hierarchical softmax gating\ucite{xu2022survey}：这种gating策略将多个专家网络组织成一个层次结构，每一层都有一个softmax gating来决定下一层的激活。这种方法可以减少softmax gating的计算复杂度，从而提高模型的效率。
+    \item Hash layer\ucite{roller2021hash}：这种gating策略使用哈希函数来为每个输入分配一个或多个专家网络，而不需要学习任何参数或者使用额外的损失函数。这种方法可以实现极高的稀疏性和效率，同时保持或者提升模型的性能。
+    \item Topology-aware gating\ucite{chen2022ta}: TA-MoE中提出了一种拓扑感知的路由策略，它能够根据网络拓扑的变化动态地调整MoE的数据分派的调度策略。通过基于通信建模的方法，TA-MoE将调度问题抽象为一个优化目标，并得到了适用于不同拓扑结构的近似调度模式。他们设计了一种拓扑感知辅助损失函数，它可以自适应地根据底层拓扑调整数据分派策略，而不会牺牲模型的准确性。
+\end{itemize}
+
+\subsection{分布式深度学习训练系统概述}
 
 分布式深度学习训练是一种将一个任务划分为较小的子任务并在多个处理器或设备上同时运行的技术\ucite{ben2019demystifying}。
 % 
