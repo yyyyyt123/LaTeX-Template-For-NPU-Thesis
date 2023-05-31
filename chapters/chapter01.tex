@@ -24,7 +24,7 @@
 % 
 近年来,学术界和工业界都对开发精度更高,参数量更大的预训练模型感兴趣,因为采用较大的模型会带来更高的准确性。
 % 
-如图\ref{fig-dl}所示,近年机器学习模型参数量近几年呈现爆炸式增长。远远超出了常用GPU的显存限制（通常只有40-80GB，如Nvidia A100），这也对我们如何快速，高效的训练模型提出了全新的挑战。
+如图\ref{fig-dl}所示,近年机器学习模型参数量近几年呈现爆炸式增长。远远超出了常用GPU的显存限制（通常只有40-80GB，如Nvidia A100\ucite{nvidia_a100}），这也对我们如何快速，高效的训练模型提出了全新的挑战。
 
 \begin{figure}[t]
 \centering
@@ -67,14 +67,12 @@ MoE混合专家系统是一种稀疏模型，因此其训练过程不同于传�
     \textbf{额外通信开销：}
     MoE模型引入了GPU集群节点间额外的All-to-All通信，这种通信方式需要在所有计算节点之间进行数据传输和同步，由于All-to-All通信是一种同步通信方式，因此它会严重影响训练速度和效率。
     但是这种通信方式在MoE模型中是必需的，因为它需要将每个计算节点计算得到的结果进行汇总和组合，以得到最终的预测结果。
-    % 为了减少All-to-All通信的开销，可以采用异步通信或一些优化策略，如节点划分和负载均衡，以提高通信效率和并行度。
 
     \item 
     \textbf{节点负载不均衡：}
     由于MoE模型中的Gating在训练过程中不断变化，因此数据可能被分配到不同的专家上，导致负载分配不平衡的问题。
     如果某些专家的负载过高，而其他专家的负载过低，就会导致训练时间的延长和模型性能的下降。
     因此，需要根据每个专家的激活情况和计算负载进行动态的数据分配和负载均衡，以确保每个专家的计算负载均衡，并最大限度地利用计算资源。
-    % 可采用一些负载均衡算法，如动态调整负载均衡和任务分配策略，以实现动态负载均衡和高效的训练
 
 
 \end{itemize}
@@ -96,95 +94,11 @@ MoE混合专家系统是一种稀疏模型，因此其训练过程不同于传�
 % 
 目前MoE模型在语音识别、自然语言处理、计算机视觉等领域都取得了很好的效果。
 % 
-因此，研究MoE模型的分布式训练和优化策略，可以进一步提高模型的训练效率和性能，适应更复杂和庞大的深度学习任务和数据集的需求。
+因此，研究MoE模型的分布式训练和优化策略对于进一步提高模型的训练效率和性能具有重要意义。通过并行化和分布式计算等技术手段，可以加快MoE模型的训练过程，同时提高模型在大规模数据集上的效果。这将有助于应对深度学习任务和数据集日益复杂和庞大的挑战。
 % 
-不仅能够为深度学习领域的研究提供新的思路和方法，还可以为各个领域的应用提供更加高效和精确的解决方案。
-
-
-
-\section{研究内容}
-
-\textbf{研究目标}。
-
-\begin{figure}[t!]
-    \vskip 2ex
-    \centering
-    \includegraphics[width=0.99\linewidth]{figures/fig7.png}
-    \caption{传统的Top1和Top2 Gating策略}
-    \label{fig-overview}
-    \end{figure}
-
-本课题针对MoE模型带来以上挑战，拟分析现有的MoE模型分布式训练系统存在的缺陷，并设计一套全新的MoE模型训练系统。
+此外，研究MoE模型的训练和优化策略不仅对于深度学习领域的研究具有重要意义，还能为各个领域的应用提供更高效和精确的解决方案。通过将多个专家的知识和能力结合起来，MoE模型能够更好地应对现实世界中的复杂问题，并提供更加准确和可靠的预测结果。
 % 
-如图\ref{fig-overview}所示，我们提出了一种全新的MoE训练系统，通过在算法层面（gating policy）和系统层面（Expert placement scheduler）提出创新的训练解决方案，旨在克服MoE模型训练过程中的瓶颈，并更好地适应复杂而庞大的深度学习任务需求。
-
-在算法层面，我们针对MoE模型的关键部分，即gating策略，进行了改进。我们通过动态调整数据分派策略，使其获得较快的收敛速度，同时也有合适的全局通信开销。
-
-同时，在系统层面，我们提出了一种专家分配调度器（Expert placement scheduler），它能够根据网络拓扑以及任务负载，找到最合适的专家并行的策略。这样的设计考虑任务的特性、数据的分布以及专家的能力，我们能够动态地优化专家的分配策略，使得每个专家都能够发挥最大的潜力，并在整个系统中平衡负载和资源利用率。
-
-这种全新的训练解决方案使得MoE模型能够更好地应对复杂和庞大的深度学习任务需求。通过优化算法和系统设计，我们能够充分发挥MoE模型的潜力，提高模型的准确性和泛化能力，为解决现实世界中的复杂问题提供了有力的工具。我们的研究对于推动MoE技术的发展和应用具有重要意义，并在深度学习模型训练的领域取得了显著的突破。
-
-\subsection{基于动态路由的数据分派策略}
-
-\begin{figure}[t!]
-\vskip 2ex
-\centering
-\includegraphics[width=0.5\linewidth]{figures/fig3.png}
-\caption{传统的Top1和Top2 Gating策略}
-\label{fig-top1_top2}
-\end{figure}
-
-如图\ref{fig-top1_top2}所示在传统的MoE模型中，采用固定的Top1和Top2 Gating策略，即将数据发送到分数最高（次高）的expert进行处理。
-% 
-然而，采用Top1 Gating时，由于只选择一个最高分数的expert，可能会错过其他有价值的信息，导致模型收敛速度较慢；
-% 
-而采用Top2 Gating时，虽然可以选择两个最高分数的expert，但每轮训练时间较长，因为需要进行两次All-to-All通信。
-% 
-因此我们能否将Top1和Top2 Gating策略结合起来，以一种动态的方式选择合适的数据分派策略,从而实现较快的收敛速度和较短的训练时间。
-% 
-一种简单的方法是，将每个数据按照Top1和Top2的分数进行排序，然后将它们分别分配给Top1和Top2的expert进行处理。
-% 
-这种方法可以利用Top1和Top2的优点，避免错过其他有价值的信息，同时减少通信开销，提高训练效率。
-
-\subsection{基于网络拓扑的自动负载均衡策略}
-
-
-\begin{figure}[t!]
-\vskip 2ex
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \includegraphics[width=1\linewidth]{figures/fig4.png}
-        \caption{GPU集群内网络拓扑连接图}
-        \label{fig-kek-tree}
-    \end{minipage}
-    %
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \includegraphics[width=0.8\linewidth]{figures/fig5.png}
-        \caption{8层128专家的Transformer-XL\ucite{dai2019transformer}的MoE模型,第1层16个专家负载变化情况}
-        \label{fig-transformer-xl}        
-    \end{minipage}
-\end{figure}
-
-虽然基于 MoE 的算法开辟了一个巨大扩展模型参数量机会，但它也对训练系统带来了新的挑战，而这些挑战在之前的密集型DNN训练算法和系统中从未见过。根本原因是动态专家选择和灵活的 MoE 结构。具体来说，每个 MoE 层由一定数量的并行专家组成，这些专家分布在加速器（本工作中的 GPU）上，其中每个 GPU 根据智能门函数将每个输入数据分配给几个最适合的专家并取回相应的输出以将它们组合起来。这意味着每个专家的工作量基本上是不确定的，取决于输入数据和门函数。在图\ref{fig-transformer-xl}中，我们使用了一个8层的Transformer-xl MoE模型，分析了第1层16个专家负载变化情况。
-
-我们发现，在MoE模型中，不同专家的负载在每次迭代中都会发生变化。
-% 
-这种现象是由于MoE的稀疏性动态数据分配所导致的，导致每个专家获取的数据不均匀，从而产生了负载不均衡的问题。
-% 
-这会导致一些节点或expert的负载过重，从而影响整个模型的训练速度和效果。因此，需要采取适当的负载均衡策略来缓解这个问题。
-% 
-此外在MoE模型中所有专家都需要从其他GPU上那里获得输入，这引入了GPU集群所有节点间额外的All-to-All通信，且All-to-All通信与后续计算是完全同步关系，并行较差。
-% 
-而GPU集群内部节点之间的网络带宽并不相同，节点通信效率存在差异。
-% 
-因而All-to-All通信也成为了大规模MoE训练中最耗时的操作之一。
-% 
-它通常实现为具有可变消息大小的同步 All-to-All 操作。考虑到动态特性的数据分派会导致计算和通信的严重不平衡，这样的方法会导致严重的开销。
-
-因此，为了解决负载不均衡问题，需要采取一些适当的负载均衡策略，我们需要结合GPU集群内部节点之间的网络带宽不相同的情况，选择最佳的负载均衡策略，以提高整个模型的训练效率和性能。
-
-% \medskip
+因此，对MoE模型的分布式训练和优化策略进行深入研究，还能够在各个应用领域中取得更大的突破，为人工智能技术的进步做出重要贡献。
 
 
 
@@ -207,12 +121,12 @@ Tutel 中的优化已集成到 DeepSpeed 中，以促进 MoE 模型训练。
 \subsection{MoE数据分派策略}
 MoE的核心问题之一是如何设计gating策略，即如何根据输入分配不同的专家网络。不同的gating策略会影响模型的性能、稀疏性、均衡性和公平性。
 \begin{itemize}
-    \item Softmax gating\ucite{he2021fastmoe}：这是最简单的一种gating策略，它使用一个softmax层来为每个输入分配一个概率分布，表示每个专家网络的权重。这种方法可以看作是多个专家网络合作来产生输出，但是也会导致所有的专家网络都被激活，从而增加计算量和内存消耗。
-    \item Top-k gating\ucite{hwang2022tutel}：这种gating策略只选择概率最高的k个专家网络来处理输入，其他的专家网络则被忽略。这种方法可以实现稀疏性，即只有少数的专家网络被激活，从而节省计算量和内存消耗。但是这种方法也会带来一些问题，比如如何确定k的值，以及如何保证每个专家网络都能被充分利用。
-    \item Noisy softmax gating\ucite{xu2022survey}：这种gating策略在softmax gating的基础上增加了一个可学习的噪声权重，用来提高不同专家网络的gating均衡性。这种方法可以防止某些专家网络被过度使用或者被忽略，从而提高模型的公平性和泛化能力。
-    \item Hierarchical softmax gating\ucite{xu2022survey}：这种gating策略将多个专家网络组织成一个层次结构，每一层都有一个softmax gating来决定下一层的激活。这种方法可以减少softmax gating的计算复杂度，从而提高模型的效率。
-    \item Hash layer\ucite{roller2021hash}：这种gating策略使用哈希函数来为每个输入分配一个或多个专家网络，而不需要学习任何参数或者使用额外的损失函数。这种方法可以实现极高的稀疏性和效率，同时保持或者提升模型的性能。
-    \item Topology-aware gating\ucite{chen2022ta}: TA-MoE中提出了一种拓扑感知的路由策略，它能够根据网络拓扑的变化动态地调整MoE的数据分派的调度策略。通过基于通信建模的方法，TA-MoE将调度问题抽象为一个优化目标，并得到了适用于不同拓扑结构的近似调度模式。他们设计了一种拓扑感知辅助损失函数，它可以自适应地根据底层拓扑调整数据分派策略，而不会牺牲模型的准确性。
+    \item \textbf{Softmax gating}\ucite{he2021fastmoe}：这是最简单的一种gating策略，它使用一个softmax层来为每个输入分配一个概率分布，表示每个专家网络的权重。这种方法可以看作是多个专家网络合作来产生输出，但是也会导致所有的专家网络都被激活，从而增加计算量和内存消耗。
+    \item \textbf{Top-k gating}\ucite{hwang2022tutel}：这种gating策略只选择概率最高的k个专家网络来处理输入，其他的专家网络则被忽略。这种方法可以实现稀疏性，即只有少数的专家网络被激活，从而节省计算量和内存消耗。但是这种方法也会带来一些问题，比如如何确定k的值，以及如何保证每个专家网络都能被充分利用。
+    \item \textbf{Noisy softmax gating}\ucite{xu2022survey}：这种gating策略在softmax gating的基础上增加了一个可学习的噪声权重，用来提高不同专家网络的gating均衡性。这种方法可以防止某些专家网络被过度使用或者被忽略，从而提高模型的公平性和泛化能力。
+    \item \textbf{Hierarchical softmax gating}\ucite{xu2022survey}：这种gating策略将多个专家网络组织成一个层次结构，每一层都有一个softmax gating来决定下一层的激活。这种方法可以减少softmax gating的计算复杂度，从而提高模型的效率。
+    \item \textbf{Hash layer}\ucite{roller2021hash}：这种gating策略使用哈希函数来为每个输入分配一个或多个专家网络，而不需要学习任何参数或者使用额外的损失函数。这种方法可以实现极高的稀疏性和效率，同时保持或者提升模型的性能。
+    \item \textbf{Topology-aware gating}\ucite{chen2022ta}: TA-MoE中提出了一种拓扑感知的路由策略，它能够根据网络拓扑的变化动态地调整MoE的数据分派的调度策略。通过基于通信建模的方法，TA-MoE将调度问题抽象为一个优化目标，并得到了适用于不同拓扑结构的近似调度模式。他们设计了一种拓扑感知辅助损失函数，它可以自适应地根据底层拓扑调整数据分派策略，而不会牺牲模型的准确性。
 \end{itemize}
 
 \subsection{分布式深度学习训练系统概述}
@@ -252,6 +166,13 @@ MoE的核心问题之一是如何设计gating策略，即如何根据输入分�
 % 
 总的来说，数据并行难度相对较低,只需要并行化已有代码，但是其额外的通信开销随着GPU数量增加而增加，大规模训练性能较差。
 
+\begin{figure}[t!]
+    \vskip 2ex
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/dataparallel.png}
+    \caption{分布式训练-数据并行}
+    \label{fig-data-parallel}
+    \end{figure}
 
 \item
 \textbf{模型并行性 (Model parallel)\ucite{shazeer2018mesh}：}
@@ -267,6 +188,13 @@ MoE的核心问题之一是如何设计gating策略，即如何根据输入分�
 % 
 总的来说,模型并行适合那些模块化清晰且参数易于分割的深度学习模型，并且可以更好地随处理器数量线性缩放。
 
+\begin{figure}[h!]
+    \vskip 2ex
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/modelparallel.png}
+    \caption{分布式训练-模型并行}
+    \label{fig-model-parallel}
+    \end{figure}
 
 \item
 \textbf{流水线并行 (Pipeline parallel)\ucite{huang2019gpipe}：}
@@ -289,6 +217,15 @@ MoE的核心问题之一是如何设计gating策略，即如何根据输入分�
 但是它主要挑战是需要更严格的同步不同阶段的计算,部分阶段可能存在空转,需要通过调整Macro-Batch大小来缓解。
 % 
 通常模型并行与流水线并行可能一起使用，以更好的平衡流水线并行中各个阶段的计算负载与数据通信开销。
+
+\begin{figure}[t!]
+    \vskip 2ex
+    \centering
+    \includegraphics[width=0.7\linewidth]{figures/pipelineparallel.png}
+    \caption{分布式训练-流水线并行}
+    \label{fig-pipeline-parallel}
+    \end{figure}
+
 
 \end{itemize}
 
