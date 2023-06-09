@@ -5,24 +5,31 @@
 \chapter[Abstract]{Abstract}
 \markboth{英~文~摘~要}{英~文~摘~要}
 
-\noindent \blindtext
+% \noindent \blindtext
 
-\noindent \blindtext
+% \noindent \blindtext
+
+Our work aims to propose a distributed training system for MoE (Mixture of Experts) models, with the goal of accelerating and optimizing the training process of large-scale models. The MoE model is a powerful deep learning model, but its training process is often constrained by computational and communication bottlenecks. To address these issues, we introduce two innovative points based on the Deepspeed distributed deep learning framework: dynamic routing for data allocation and network topology-based load balancing strategy.
+
+Firstly, we introduce dynamic routing for data allocation to optimize the allocation process within the MoE model. Traditional Top-1 and Top-2 gating strategies have limitations in data allocation, as they cannot fully leverage the expert capacity and diversity of the model. We propose a dynamic routing strategy that dynamically selects suitable experts for computation based on the data features and model weights, achieving better data allocation and utilization.
+
+Secondly, we design a load balancing strategy for experts based on network topology to address the performance degradation during the All-to-All communication phase in each layer. In traditional parallel MoE training, computation must wait for All-to-All communication finish, which becomes a performance bottleneck, especially in large-scale models and distributed environments. By analyzing the GPU cluster's topology, we propose an intelligent load balancing strategy that adjusts the expert allocation and data routing based on the network topology information to reduce communication overhead and improve overall performance.
+
+We conducted a series of experiments to evaluate our designs. Real experiments were conducted on medium-sized GPU clusters. In the forward and backward propagation stages, our designed training system achieved up to a 4x speedup and effectively utilized the diversity of data. However, in the gradient synchronization phase, there was a slight performance drop due to the more complex communication patterns. Overall, the end-to-end experimental results demonstrate that our designed strategies can balance the computational load, reduce communication bottlenecks, and improve overall training performance.
 
 \noindent To sum up, this paper works on those
 \vspace{-12pt}
 \begin{enumerate} \setlength{\itemsep}{0pt}
-    \item Balabala 1
-    \item Balabala 12
-    \item Balabala 123
-    \item Balabala 1234
-    \item Balabala 12345
+    \item Analyzing the limitations of existing MoE training frameworks
+\item Proposing a data allocation approach based on dynamic routing
+\item Designing a load balancing strategy based on network topology
+\item Conducting real-system experiments to validate the performance of the proposed 
 \end{enumerate}
 \vspace{-12pt}
 
 
 \vspace{1em}
-\noindent {\textbf{KEY WORDS:}} \quad thesis, template, \LaTeX
+\noindent {\textbf{KEY WORDS:}} \quad Mixture of Experts model, distributed deep learning training system, dynamic load balancing algorithm
 
 \clearpage
 \endinput
