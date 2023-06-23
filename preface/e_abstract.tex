@@ -17,7 +17,7 @@ Secondly, we design a load balancing strategy for experts based on network topol
 
 We conducted a series of experiments to evaluate our designs. Real experiments were conducted on medium-sized GPU clusters. In the forward and backward propagation stages, our designed training system achieved up to a 4x speedup and effectively utilized the diversity of data. However, in the gradient synchronization phase, there was a slight performance drop due to the more complex communication patterns. Overall, the end-to-end experimental results demonstrate that our designed strategies can balance the computational load, reduce communication bottlenecks, and improve overall training performance.
 
-\noindent To sum up, this paper works on those
+\noindent To sum up, the contribution of our works can be summarized as follow:
 \vspace{-12pt}
 \begin{enumerate} \setlength{\itemsep}{0pt}
     \item Analyzing the limitations of existing MoE training frameworks

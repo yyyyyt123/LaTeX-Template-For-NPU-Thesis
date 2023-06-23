@@ -6,7 +6,7 @@ MoE模型在原本Transformer block的FFN中通过添加门控函数以及一系
 % 
 待每个专家计算完成相对应的数据之后，我们需要通过一次额外的All-to-All通信，将计算完成的激活值返回原本对应的GPU上，并参与后续的计算过程。
 
-\section{MoE模型训练}
+\section{MoE模型的分布式训练}
 
 \begin{figure}[h!]
     \vskip 2ex
@@ -87,6 +87,34 @@ MoE模型在原本Transformer block的FFN中通过添加门控函数以及一系
     将以上步骤重复多次，直到模型收敛为止。在每次迭代中，可以使用不同的训练数据子集，防止模型陷入局部最优解。
 
 \end{itemize}
+
+\section{MoE训练瓶颈分析}
+
+在GPU集群中分布式训练MoE模型时，我们首先测量分析了一些已有训练系统存在的缺陷和问题，这些挑战会极大地影响训练效率。
+
+\begin{table}[]
+    \centering
+    \label{table-moti}
+    \caption{使用Transformer-xl~\ucite{dai2019transformer}语言模型再不同模型设计下的All-to-All通信时间与每个训练阶段完成时间。每个FFN层都使用MoE替代，且专家的数量等于GPU的数量。}
+\begin{tabular}{ccccc}
+\hline
+\cellcolor[HTML]{FFFFFF}\#Experts & Model      & All-to-All & Step Time & Ratio                           \\ \hline
+                                  & 8L + 94M   & 259        & 722       & \cellcolor[HTML]{FFFFFF}35.80\% \\
+                                  & 12L + 117M & 589        & 1684      & \cellcolor[HTML]{FFFFFF}34.90\% \\
+\multirow{-3}{*}{4}               & 24L + 233M & 1479       & 3894      & \cellcolor[HTML]{FFFFFF}37.80\% \\ \hline
+\end{tabular}
+    \end{table}
+
+
+
+\noindent \textbf{All-to-All通信效率低}
+MoE模型的训练瓶颈之一是All-to-All通信，这是由于模型中多个专家模型之间需要进行信息交换所导致的。之前的工作已经确定了All-to-All通信是MoE模型训练的一个瓶颈~\ucite{he2021fastmoe,hwang2022tutel,li2023accelerating}。表2-1显示了在我们的GPU集群中各种语言模型的训练步骤时间以及All-to-All操作的完成时间。平均而言，All-to-All操作占用了37.4\%的步进时间，这是很大一部分。在下文中，我们通过剖析MoE中All-to-All通信成本的主要原因来引入我们的工作。我们的分析基于专家数量与(GPU)设备数量相同的常见场景。
+
+首先，All-to-All操作是同步操作，会阻塞计算过程。图\ref{fig-moe-arch}显示了集群中MoE模型训练前向传递的流程图。我们观察到专家的FFN计算和组合操作仅在All-to-All操作完成时发生。在此期间，GPU大部分处于空闲状态。我们使用PyTorch Profiler对表2-1中每个实验中20个步骤的GPU活动进行了分析，并发现这种空闲状态很明显。在MoE模型的前向传递中，会使用两个All-to-All操作，一个用于将标记从之前的Add \& Norm层输出结果路由到选择的专家，另一个用于在专家计算后将它们发送回其原始GPU。因此，一个MoE层的完整训练步骤将涉及四个All-to-All操作，其中两个来自反向传递。这加剧了MoE模型训练的低效率问题。
+
+其次MoE训练过程瓶颈的第二个原因是其庞大的数据传输规模。
+由于专家的FFN架构确保其输入数据大小与输出数据大小相同，因此前向传递的两个All-to-All操作中的数据传输具有相同的大小。
+数据传输的大小由每个GPU的\textit{batch\_size}、专家（或GPU）的数量N、序列长度\textit{seq\_len}, 如top-k中的k(所选专家的数量)以及编码器,解码器输入\textit{d\_model}中的特征大小决定。
 
 \section{本章小结}
 
